@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Test - Silver & Gold</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background-color: #f0f0f0; }
+        .test-result { margin: 10px 0; padding: 10px; border: 1px solid #ccc; border-radius: 5px; }
+        .working { background-color: #d4edda; color: #155724; }
+        .not-working { background-color: #f8d7da; color: #721c24; }
+    </style>
+</head>
+<body>
+    <h2>API Connectivity Test</h2>
+    <div id="fmp-historical-test" class="test-result"></div>
+    <div id="fmp-quote-test" class="test-result"></div>
+    <div id="av-historical-test" class="test-result"></div>
+    <div id="av-quote-test" class="test-result"></div>
+
+    <script>
+        const API_KEYS = {
+            FMP: 'uRN9XFoKeDUfx9DB2qvwEqjpNlIjZQc7',
+            ALPHA_VANTAGE: '141FKQQCC6O024Q5'
+        };
+
+        async function testAPI(url, testId, successMessage, failureMessage) {
+            try {
+                const response = await fetch(url);
+                if (!response.ok) throw new Error(`HTTP Error: ${response.status} - ${response.statusText}`);
+                const data = await response.json();
+                if (data && (data.historical || data['Global Quote'] || data.length > 0)) {
+                    document.getElementById(testId).innerHTML = `<strong>${successMessage}</strong> - Data received: ${JSON.stringify(data).substring(0, 50)}...`;
+                    document.getElementById(testId).className = 'test-result working';
+                } else {
+                    throw new Error('No valid data returned');
+                }
+            } catch (error) {
+                document.getElementById(testId).innerHTML = `<strong>${failureMessage}</strong> - Reason: ${error.message}`;
+                document.getElementById(testId).className = 'test-result not-working';
+            }
+        }
+
+        // Test FMP APIs
+        testAPI(
+            `https://financialmodelingprep.com/api/v3/historical-price-full/XAGUSD?apikey=${API_KEYS.FMP}`,
+            'fmp-historical-test',
+            'FMP Historical Working',
+            'FMP Historical Not Working'
+        );
+        testAPI(
+            `https://financialmodelingprep.com/api/v3/quote/XAGUSD?apikey=${API_KEYS.FMP}`,
+            'fmp-quote-test',
+            'FMP Quote Working',
+            'FMP Quote Not Working'
+        );
+
+        // Test Alpha Vantage APIs
+        testAPI(
+            `https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=SLV&apikey=${API_KEYS.ALPHA_VANTAGE}`,
+            'av-historical-test',
+            'AV Historical Working',
+            'AV Historical Not Working'
+        );
+        testAPI(
+            `https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=SLV&apikey=${API_KEYS.ALPHA_VANTAGE}`,
+            'av-quote-test',
+            'AV Quote Working',
+            'AV Quote Not Working'
+        );
+    </script>
+</body>
+</html>
